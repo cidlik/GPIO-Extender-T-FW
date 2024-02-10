@@ -14,11 +14,22 @@ logger = logging.getLogger(__name__)
 
 
 class DUT:
+    STTY_ARGS = (
+        "ospeed 115200 ispeed 115200 time 5 "
+        "-parenb -parodd -cmspar cs8 -hupcl -cstopb cread clocal -crtscts "
+        "ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff "
+        "-opost -olcuc -ocrnl -onlcr -onocr -onlret -ofill -ofdel nl0 cr0 tab0 bs0 vt0 ff0 "
+        "-isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt "
+        "-echoctl -echoke -flusho -extproc"
+    )
+
     def __init__(self, dut):
         self.dut = dut
 
     def run(self, cmd, verbose=False):
         retval = ""
+
+        subprocess.run(f"stty -F {self.dut} {self.STTY_ARGS}", shell=True, check=True)
 
         fd = os.open(self.dut, os.O_RDWR|os.O_NOCTTY)
         try:
@@ -81,7 +92,12 @@ def test_S_R_G_commands(dut):
         digit = "1" if cmd == "S" else "0"
         result = ret_G[-1:] == digit
         if not result:
-            print(f"ret_{cmd}: {ret}; ret_G: {ret_G}")
+            print(
+                (
+                f"Error on output pin {pin} and input pin {pin + PIN_COUPLE_COUNT}. Command "
+                f"'~{cmd}{pin}' return {ret}. Command '~G{pin + PIN_COUPLE_COUNT}' return {ret_G}"
+                )
+            )
         return 0 if result else 1
 
     for pin in range(1, PIN_COUPLE_COUNT + 1):
@@ -91,17 +107,12 @@ def test_S_R_G_commands(dut):
     return 1 if err_count else 0
 
 
-# This test break the terminal. Don't run it yet.
-# Minicom calling fix problem. Try to compare state of /dev/ttyACM* device
-# before and after calling minicom: https://stackoverflow.com/a/45802610/23048061
 def test_B_command(dut):
     dut.run("~P11111", verbose=True)
-    assert dut.run("~A") == "~A11111"
-    subprocess.run(f"echo -n '~B' > {dut.dut}", check=True, shell=True)
+    assert dut.run("~A") != "~A00000"
+    dut.run("~B")
     time.sleep(1)
-    ret_A = dut.run("~A")
-    print(ret_A)
-    return 0 if ret_A == "~A00000" else 1
+    return 0 if dut.run("~A") == "~A00000" else 1
 
 
 def main():
@@ -121,6 +132,7 @@ def main():
     err += test_wrapper(test_I_command, dut, "test_I_command", "Command I test - print information")
     err += test_wrapper(test_P_A_commands, dut, "test_P_A_commands", "Commands P and A test - multiple set and get")
     err += test_wrapper(test_S_R_G_commands, dut, "test_S_R_G_commands", "Commands S, R and G test - set/reset one pin")
+    err += test_wrapper(test_B_command, dut, "test_S_R_G_commands", "Commands S, R and G test - set/reset one pin")
     return err
 
 
