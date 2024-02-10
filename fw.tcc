@@ -97,7 +97,7 @@ var command_S_R(var arr, var state) {
     sprintf(&UART0.TX, "pin: %d; state: %c\r\n", pin, state);
 #endif
     out_pin_val[pin - 1] = (state == PIN_UP) ? 1: 0;
-    sprintf(&UART0.TX, "~%c%d", (state == PIN_UP) ? 'S': 'R', pin + 1);
+    sprintf(&UART0.TX, "~%c%d", (state == PIN_UP) ? 'S': 'R', pin);
 }
 
 
