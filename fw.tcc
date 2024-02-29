@@ -78,7 +78,7 @@ var command_G(var arr) {
 
 var command_P(var arr) {
     var i;
-    
+
     for (i = 0; i < PIN_COUNT; i++) {
         out_pin_val[i] = (chr(arr[2 + i]) == PIN_UP) ? 1: 0;
     }
@@ -154,12 +154,12 @@ var pin_setup() {
 
     /* 1-5 pins to output */
     for (i = 0; i < PIN_COUNT; i++) {
-        out_pin_mode[i] = GPIO_MODE_OUTPUT|GPIO_INIT_LOW|GPIO_OTYPE_PP;
+        out_pin_mode[i] = GPIO_MODE_OUTPUT|GPIO_INIT_LOW|GPIO_OTYPE_PP|GPIO_PULL_DOWN;
     }
 
     /* 6-10 pins to input */
     for (i = 0; i < PIN_COUNT; i++) {
-        in_pin_mode[i] = GPIO_MODE_INPUT|GPIO_PULL_UP;    
+        in_pin_mode[i] = GPIO_MODE_INPUT|GPIO_PULL_UP;
     }
 }
 
